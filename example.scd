@@ -43,7 +43,7 @@ r = Routine.run({
 			// In order to understand, see:
 			// https://github.com/FunctionalJerk/SuperCollider-SerialCtl/blob/main/src/main.cpp#L62
 			if(index == 0) {
-				item = lsb.asBinaryDigits[4..].reverse;
+				item = lsb.asBinaryDigits.reverse[..3]; // only the last four bits are used here
 				~switches.setnSynchronous(item);
 			} {
 				item = (msb << 8) | lsb;

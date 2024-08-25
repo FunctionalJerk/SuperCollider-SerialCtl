@@ -35,7 +35,7 @@ void loop()
   for (int i = 0; i < numSwitches; i++)
   {
     if (digitalRead(switchPins[i]) == LOW)
-    {
+    { // you can swap these to invert switch behaviour
       switchStates |= (0 << i);
     }
     else
@@ -46,7 +46,7 @@ void loop()
 
   // suboptimal: 
   // because we always read 2 bytes in SC, there must be an unused byte here. 
-  // im future projects we can easily have upto 16 switches / buttons..
+  // In future projects we can easily have upto 16 switches / buttons.
   Serial.write(0); // Send 0 as the first byte
   Serial.write(switchStates); // Send switch states as the second byte
 
