@@ -18,7 +18,7 @@ I have only tested it in SuperCollider on Ubuntu GNU/Linux, but I'm sure this de
 This is the hardware, that I used, but I'm sure the code runs on many other microcontrollers.  
 
 - [PJRC's Teensy 3.2](https://www.pjrc.com/store/teensy32.html)
-- Pots / switches / buttons (go wild! I would recommend linear potentiometers, though)
+- Pots / switches / buttons
 - Housing 
 
 ## Todo
@@ -26,9 +26,5 @@ This is the hardware, that I used, but I'm sure the code runs on many other micr
 - upload schematics (they're pretty straight-forward)
 - remove "flickering"
 - find a more elegant way to break out the micro-USB
-- build a more complex version, that:
-	- also reads Serial-data
-	- offers more controls 
-	- has CV-out
-	- has layers and presets
-	- can fade between presets
+- reduce bytes per Message (possibly by 2)
+- Serial.read() & Value Pickup

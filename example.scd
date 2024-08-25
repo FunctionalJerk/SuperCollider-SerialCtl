@@ -1,15 +1,24 @@
 
+This example is tuned very specifically to the serial device described in:
+https://github.com/FunctionalJerk/SuperCollider-SerialCtl
+
 (
-// for me, serial-devices always appeared as "/dev/ttyACM0" or "/dev/ttyACM1"
-// always at index 0
-// if this doesn't work, go:
+
+// execute once:
+//
+// for me, serial-devices always appeared as "/dev/ttyACM0" or "/dev/ttyACM1".
+// In either case, they always were at index 0 of SerialPort.devices.
+// if this doesn't work for you, go:
 // SerialPort.listDevices
-// and copy and paste the string pointing to your device in SerialPort's first argument below
+// and copy and paste the string pointing to your device in SerialPort's port argument below
 var port = SerialPort.devices[0];
 
+~switches = Bus.control(s,4);
+~pots = Bus.control(s,4);
+
 p = SerialPort(
-	port,
-    baudrate: 9600,    //check that baudrate is the same as in the sketch
+	port: port,
+    baudrate: 115200,    //check that baudrate is the same as in the sketch
 	exclusive: true,
     xonxoff: true,
 );
@@ -18,41 +27,48 @@ p.doneAction = { ("serial port \"" ++ port ++ "\" disconnected").postln; };
 )
 
 (
-// This routine was taken from the examples and modified to fit my needs.
-// The serial data should appear as 'index;value' eg. '1;786'
-~pots = Bus.coSerialPort.listDevicesntrol(s, 7);
 
-r = Routine({
-    var byte, str;
-	var which = 0;
-	var val = 0;
+r = Routine.run({
+	// Define the least significant & most significant byte
+	var lsb = 0;
+	var msb = 0;
 
-    loop {
-        if(p.read==10, {
-            str = "";
+	var index = 0;
+	var item = 0;
 
-            while({byte = p.read; byte != 13 }, {
-                str = str ++ byte.asAscii
-            });
+	loop {
+		msb = p.read; lsb = p.read;
 
-			# which, val = str.split($;).asInteger;
-			~pots.setAt(which, val);
-        })
-    }
-}).play;
+		if((msb == 255) && (lsb == 255)) { index = 0 } {
+			// In order to understand, see:
+			// https://github.com/FunctionalJerk/SuperCollider-SerialCtl/blob/main/src/main.cpp#L62
+			if(index == 0) {
+				item = lsb.asBinaryDigits[4..].reverse;
+				~switches.setnSynchronous(item);
+			} {
+				item = (msb << 8) | lsb;
+				~pots.setAt(index - 1, item);
+			};
+			index = index + 1 % 5;
+		};
+	}
+});
 
-// uncomment to monitor the control-busses:
+//// Uncomment to monitor the control-busses:
 // fork { loop { ~pots.getnSynchronous.postln; 0.5.wait } };
+//// If you want to stop the Routine with CmdPeriod, uncomment:
+// CmdPeriod.doOnce{ r.stop; };
 )
 
 (
-// this is just a very basic example on how to use the serial input.
-// it uses the first two of the seven values stored in ~pots
-// to control the frequency of the SinOsc Ugen
+// This is just a very basic example on how to use the serial input:
+// It uses the first two of the four pots to control the frequency,
+// and the other two to control the width of a VarSaw Ugen.
+// They can be silenced by the first two switches.
 SynthDef(\test, {|out|
 
 	Out.ar(out,
-		SinOsc.ar(~pots.kr(2).linexp(0,1023,100,4000),0,0.3)
+		VarSaw.ar(~pots.kr(2).linexp(1,16383,100,800),0,~pots.kr(2,2) / 16383,0.3 * ~switches.kr(2))
 	)
 }).play(s)
 )
