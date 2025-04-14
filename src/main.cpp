@@ -5,6 +5,7 @@
 
 const int switchPins[numSwitches] = {19, 18, 17};
 const int potPins[numPots] = {23, 22, 21, 20};
+const int bitdepth = 14;
 
 void setup()
 {
@@ -15,7 +16,7 @@ void setup()
   }
 
   // set adc resolution to 14bits (= 16384 values)
-  analogReadResolution(14);
+  analogReadResolution(bitdepth);
 
   for (auto i : switchPins)
   {
@@ -58,7 +59,7 @@ void loop()
   }
 
   // This combination of two bytes will not occur through analogRead values (14bit),
-  // so we can use it to indicate the end of the Message  
+  // so it can be used as EOM.  
   Serial.write(255);
   Serial.write(255);
 

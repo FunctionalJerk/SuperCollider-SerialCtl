@@ -29,7 +29,7 @@ p.doneAction = { ("serial port \"" ++ port ++ "\" disconnected").postln; };
 (
 
 r = Routine.run({
-	// Define the least significant & most significant byte
+	// least & most significant byte
 	var lsb = 0;
 	var msb = 0;
 
@@ -40,8 +40,7 @@ r = Routine.run({
 		msb = p.read; lsb = p.read;
 
 		if((msb == 255) && (lsb == 255)) { index = 0 } {
-			// In order to understand, see:
-			// https://github.com/FunctionalJerk/SuperCollider-SerialCtl/blob/main/src/main.cpp#L62
+			// see: https://github.com/FunctionalJerk/SuperCollider-SerialCtl/blob/main/src/main.cpp#L62
 			if(index == 0) {
 				item = lsb.asBinaryDigits.reverse[..3]; // only the last four bits are used here
 				~switches.setnSynchronous(item);
