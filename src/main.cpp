@@ -1,68 +1,70 @@
-#include <Arduino.h>
+  #include <Arduino.h>
 
-#define numSwitches 3 // overall input switchPins connected
-#define numPots 4 // overall input potPins connected
+  #define numSwitches 3 // overall input switchPins connected
+  #define numPots 4 // overall input potPins connected
 
-const int switchPins[numSwitches] = {19, 18, 17};
-const int potPins[numPots] = {23, 22, 21, 20};
-const int bitdepth = 14;
+  const int switchPins[numSwitches] = {19, 18, 17};
+  const int potPins[numPots] = {23, 22, 21, 20};
+  const int bitdepth = 14;
+  const int tickrate = 1000;
 
-void setup()
-{
-  Serial.begin(115200);
-  while (!Serial)
-  { // wait for Serial...
-    delay(500);
-  }
-
-  // set adc resolution to 14bits (= 16384 values)
-  analogReadResolution(bitdepth);
-
-  for (auto i : switchPins)
+  // By default, compilers add padding bytes between struct members to optimize memory access speed.
+  #pragma pack(push, 1) // Save the current alignment setting, then set alignment to 1 byte (no padding)
+  struct PotSwitchValues 
   {
-    pinMode(i, INPUT_PULLDOWN);
-  }
-  for (auto i : potPins)
-  {
-    pinMode(i, INPUT);
-  }
-}
+    uint16_t pot1:bitdepth;
+    uint16_t pot2:bitdepth;
+    uint16_t pot3:bitdepth;
+    uint16_t pot4:bitdepth;
+    bool switch1:1;
+    bool switch2:1;
+    bool switch3:1; 
+  };
+  #pragma pack(pop) // Restore the previous alignment setting afterward.
 
-void loop()
-{
-  uint8_t switchStates = 0;
-  uint16_t potVal;
+  PotSwitchValues Payload;
 
-  for (int i = 0; i < numSwitches; i++)
+  uint8_t numBytes = sizeof(Payload);
+
+  void setup()
   {
-    if (digitalRead(switchPins[i]) == LOW)
-    { // you can swap these to invert switch behaviour
-      switchStates |= (0 << i);
+
+    Serial.begin(115200);
+    while (!Serial)
+    { // wait for Serial...
+      delay(500);
     }
-    else
+
+    // set adc resolution to 14bits (= 16384 values)
+    analogReadResolution(bitdepth);
+
+    for (auto pin : switchPins)
     {
-      switchStates |= (1 << i);
+      pinMode(pin, INPUT_PULLDOWN);
+    }
+    for (auto pin : potPins)
+    {
+      pinMode(pin, INPUT);
     }
   }
 
-  // suboptimal: 
-  // because we always read 2 bytes in SC, there must be an unused byte here. 
-  // In future projects we can easily have upto 16 switches / buttons.
-  Serial.write(0); // Send 0 as the first byte
-  Serial.write(switchStates); // Send switch states as the second byte
-
-  for (auto i : potPins)
+  void loop()
   {
-    potVal = analogRead(i);
-    Serial.write((potVal >> 8) & 0xFF); // Send upper byte of 12-bit value
-    Serial.write(potVal & 0xFF);        // Send lower byte of 12-bit value  }
+    
+    Payload.switch1 = digitalRead(switchPins[0]);
+    Payload.switch2 = digitalRead(switchPins[1]);
+    Payload.switch3 = digitalRead(switchPins[2]);
+    
+    Payload.pot1 = analogRead(potPins[0]);
+    Payload.pot2 = analogRead(potPins[1]);
+    Payload.pot3 = analogRead(potPins[2]);
+    Payload.pot4 = analogRead(potPins[3]);
+    
+    // send a buffer of bytes by giving a pointer and a length
+    Serial.write((uint8_t*)&Payload, sizeof(Payload));
+    
+    // get number of bytes, this is needed in supercollider
+    // Serial.println(sizeof(Payload));
+
+    delay(tickrate);
   }
-
-  // This combination of two bytes will not occur through analogRead values (14bit),
-  // so it can be used as EOM.  
-  Serial.write(255);
-  Serial.write(255);
-
-  // Serial.write(0xFF); // Send the EOM byte
-  delay(5);
-}
