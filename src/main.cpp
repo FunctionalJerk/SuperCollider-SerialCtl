@@ -6,7 +6,7 @@
   const int switchPins[numSwitches] = {19, 18, 17};
   const int potPins[numPots] = {23, 22, 21, 20};
   const int bitdepth = 14;
-  const int tickrate = 1000;
+  const int tickrate = 2;
 
   // By default, compilers add padding bytes between struct members to optimize memory access speed.
   #pragma pack(push, 1) // Save the current alignment setting, then set alignment to 1 byte (no padding)
@@ -29,7 +29,7 @@
   void setup()
   {
 
-    Serial.begin(115200);
+    Serial.begin(230400);
     while (!Serial)
     { // wait for Serial...
       delay(500);
