@@ -22,9 +22,9 @@ struct PotSwitchValues
   uint16_t pot2 : bitdepth;
   uint16_t pot3 : bitdepth;
   uint16_t pot4 : bitdepth;
-  short switch1 : 1; // :4 for serialplot app
-  short switch2 : 1; // :4 for serialplot app
-  short switch3 : 1; // :4 for serialplot app // true == 1010
+  bool switch1 : 1; // :4 for serialplot app
+  bool switch2 : 1; // :4 for serialplot app
+  bool switch3 : 1; // :4 for serialplot app // true == 1010
 };
 #pragma pack(pop) // Restore the previous alignment setting afterward.
 
@@ -32,7 +32,7 @@ PotSwitchValues Payload;
 
 void setup()
 {
-  Serial.begin(19200);
+  Serial.begin(115200);
   while (!Serial)
   { // wait for Serial...
     delay(500);
@@ -75,19 +75,18 @@ void sendData()
   Serial.write(START_MARKER);
   Serial.write(bytes, sizeof(Payload)); // send a buffer of bytes by giving a pointer (bytes) and a length (sizeof(Payload))
   Serial.write(checksum);
-  Serial.write(END_MARKER);
+  Serial.write(END_MARKER); // skip maybe? 
   // ..or get number of bytes, this is needed in supercollider
   //Serial.println(sizeof(Payload));
 }
 
 void loop()
 {
-
   readData();
 
   if (Serial.availableForWrite())
   {
     sendData();
   }
-  delay(tickrate);
+  // delay(tickrate);
 }

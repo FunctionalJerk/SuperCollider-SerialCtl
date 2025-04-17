@@ -20,7 +20,8 @@ s.waitForBoot {
 
 p = SerialPort(
 	port: port,
-	baudrate: 19200,
+	// databits: 14,
+	baudrate: 115200,
 	databits: 8,       // Explicitly set data bits (default is 8)
 	stopbit: false,    // 1 stop bit (false = 1, true = 2)
 	parity: nil,       // No parity
@@ -48,7 +49,7 @@ reconstruct = {|array|
 
 	var values = [
 		((array[1] & 0x3F ) << 8) | array[0],                          // pot 1
-		(array[3] & 0xF << 10) | (array[2] << 2) | (array[1] >> 6),   // pot 2
+		(array[3] & 0xF << 10) | (array[2] << 2) | (array[1] >> 6),    // pot 2
 		((array[5] & 0x3) << 12) | (array[4] << 4) | ((array[3] >> 4) & 0xF), // pot 3
 		(array[5] >> 2) | (array[6] << 6),                             // pot 4
 
@@ -83,7 +84,7 @@ r = Routine.run({
 				normedControls = controls[..3] / 0x3FFF ++ controls[4..];
 				~buffer.set(*lace([(0..6), normedControls], 14));
 				// ~controls = controls;                       // look at them
-				// ~controlBus.setnSynchronous(controls);      // write to control rate bus
+				// ~controlBus.setnSynchronous(normedControls);      // write to control rate bus
 				// ~struct.putAll(lace([keys, controls], 14)); // store in dictionary/event
 
 			} { "checksum doesn't check out: % vs. %\n".postf(expectedChecksum, checksum) }
@@ -91,6 +92,9 @@ r = Routine.run({
 	}
 });
 )
+r.stop
+
+{ ~controlBus.kr(4) }.scope
 
 //// monitor the control-busses:
 r { inf.do { ~controlBus.getnSynchronous.postln; 0.5.wait } }.play;
@@ -117,7 +121,7 @@ Ndef(\x, {
 	)
 }).play
 )
-
+1 / 750
 (
 // BUFFER
 Ndef(\x, {
@@ -125,10 +129,14 @@ Ndef(\x, {
 	var phase = Phasor.ar(rate: BufRateScale.kr(~buffer), start: 0, end: 1.0);
 	var buf = VarLag.ar(BufRd.ar(7, ~buffer.bufnum, phase: phase, loop: 1), 0.0075, warp: \sine);
 	// var freq = BufRd.ar(7, ~buffer.bufnum, phase: phase, loop: 1);
-	var trig = Changed.kr(buf[4..]);
+	// var trig = Changed.kr(buf[4..]);
 
-	var freq = buf[..3].linexp(0,1,50,4000);
-	freq.poll;
+	var freq = buf[..3].linexp(0,1,50,14000);
+	// var freq = [MouseX.kr(50,14000,1, 0.0), MouseY.kr(50,14000,1,0.0)];
+
+	// var freq = Phasor.kr(0, 1, 0, 300).linexp(0,300,50,14000);
+
+	// freq.poll;
 	Out.ar(0,Splay.ar(SinOsc.ar(freq)) * 0.1)
 
 }).play
