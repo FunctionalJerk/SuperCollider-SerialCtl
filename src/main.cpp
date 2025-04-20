@@ -31,7 +31,7 @@ static_assert(sizeof(report) == RAWHID_TX_SIZE, "HIDPacket must be exactly 64 by
 
 void setup()
 {
-    Serial.begin(9600);
+    Serial.begin(115200);
     analogReadAveraging(1);
     analogReadRes(bitdepth);
 
@@ -41,7 +41,7 @@ void setup()
     for (auto pin : potPins) pinMode(pin, INPUT);
 }
 
-void readData()
+void updateData()
 {
     memset(&report, 0, sizeof(report)); // set all to 0
 
@@ -56,18 +56,20 @@ void readData()
     }
 }
 
+bool receive() {
+    uint8_t *buffer[RAWHID_TX_SIZE];
+    RawHID.recv(&buffer, 1000);
+    memcpy(&report, *buffer, RAWHID_TX_SIZE);
+    return true;
+}
+
 void loop()
 {
-    // uint32_t now = millis();
-    // report[0] = now / 100;
-    // uint8_t size = report[1];
-    // Serial.println(sizeof(report));
-    readData();
+    if(RawHID.available()) {
+        receive();
+    }
+    updateData();
 
-    // Serial.write((uint8_t*)&report, sizeof(report));
-    // report[1] = size;
-    // report[0] = 10;
-    //CustomHID.send((uint8_t *)&report, 1000);
     RawHID.send((uint8_t *)&report, 1000);
     delay(1);
 }

@@ -3,6 +3,8 @@ HID.postAvailable // post all
 
 ~teensy = HID.open(5824, 1158); //open by vendorID & productID
 
+HIDFunc
+
 (
 var numPots = 4;
 var numSwitches = 3;
@@ -51,18 +53,21 @@ var numSwitches = 3;
 )
 
 (
-Ndef(\test3, {
+Ndef(\test, {
 
 	var ctrl = PlayBuf.ar(7, ~buffer,loop: 1);
-	var freqs = ctrl[..3].linexp(0.0,1.0,50,10000);
+	var freqs = ctrl[..1].lag(0.02).linexp(0.0,1.0,10,10000);
+	var muls = ctrl[2..3];
 	var switches = ctrl[4..];
-	switches.postln;
+
 	Splay.ar(
 		SinOscFB.ar(
-			freq: freqs[..2],
-			feedback: switches[0],
-			mul: SinOscFB.ar(freqs[3], switches[1], switches[2], 1).range(0,1)
-		)
+			freq: freqs,
+			feedback: SinOsc.ar(freqs.rotate / (switches[1] * pi).lag(0.5), 0, muls[0] * pi, 1),
+		) * SelectX.kr(switches[0].lag(1), [
+			SinOscFB.ar(freqs.rotate * (muls[0] + 0.5),  muls[1] * pi, switches[2].lag(0.5) * 2, 1),
+			LFNoise0.kr(freqs.rotate * (muls[1] * pi + pi), switches[2].lag(0.5) * 2, 1)
+		])
 	) * 0.1
 }).play
 )
