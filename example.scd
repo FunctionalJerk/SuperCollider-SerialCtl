@@ -84,14 +84,15 @@ r = Routine.run({
 				normedControls = controls[..3] / 0x3FFF ++ controls[4..];
 				~buffer.set(*lace([(0..6), normedControls], 14));
 				// ~controls = controls;                       // look at them
-				// ~controlBus.setnSynchronous(normedControls);      // write to control rate bus
+				~controlBus.setnSynchronous(normedControls);      // write to control rate bus
 				// ~struct.putAll(lace([keys, controls], 14)); // store in dictionary/event
 
-			} { "checksum doesn't check out: % vs. %\n".postf(expectedChecksum, checksum) }
+			} { "checksum doesn't match: % vs. %\n".postf(expectedChecksum, checksum) }
 		} {  };
 	}
 });
 )
+p.close
 r.stop
 
 { ~controlBus.kr(4) }.scope
@@ -121,13 +122,13 @@ Ndef(\x, {
 	)
 }).play
 )
-1 / 750
+
 (
 // BUFFER
 Ndef(\x, {
 
 	var phase = Phasor.ar(rate: BufRateScale.kr(~buffer), start: 0, end: 1.0);
-	var buf = VarLag.ar(BufRd.ar(7, ~buffer.bufnum, phase: phase, loop: 1), 0.0075, warp: \sine);
+	var buf = VarLag.ar(BufRd.ar(7, ~buffer.bufnum, phase: phase, loop: 1), 0.009, warp: \sine);
 	// var freq = BufRd.ar(7, ~buffer.bufnum, phase: phase, loop: 1);
 	// var trig = Changed.kr(buf[4..]);
 
@@ -141,4 +142,3 @@ Ndef(\x, {
 
 }).play
 )
-
