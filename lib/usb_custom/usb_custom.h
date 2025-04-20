@@ -1,7 +1,7 @@
 #ifndef USB_CUSTOM_HID_H_
 #define USB_CUSTOM_HID_H_
 
-#include "custom_usb_names.h"
+#include <custom_usb_names.h>
 #include <custom_usb_desc.h>     
 
 #include <inttypes.h>

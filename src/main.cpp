@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include <usb_dev.h>      // Teensy's core USB functions
+// #include <usb_dev.h>      // Teensy's core USB functions
 // #include "custom_usb_desc.h"     // Your custom descriptor (quotes = local first)
 // #include "custom_usb_names.h"    // Your custom names
 // #include <usb_rawhid.h>

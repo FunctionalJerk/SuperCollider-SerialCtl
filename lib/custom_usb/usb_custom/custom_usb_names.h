@@ -1,7 +1,0 @@
-#ifndef USB_NAMES_H
-#define USB_NAMES_H
-
-#define STR_MANUFACTURER    MANUFACTURER_NAME
-#define STR_PRODUCT         PRODUCT_NAME
-
-#endif

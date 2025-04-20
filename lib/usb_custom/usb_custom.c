@@ -1,5 +1,5 @@
 //#include <Arduino.h>
-#include "usb_dev.h"
+#include "custom_usb_dev.h"
 #include "usb_custom.h"
 #include "core_pins.h" // for yield(), millis()
 #include <string.h>    // for memcpy()
