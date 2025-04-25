@@ -65,9 +65,9 @@ bool receive() {
 
 void loop()
 {
-    if(RawHID.available()) {
-        receive();
-    }
+    // if(RawHID.available()) {
+    //     // receive();
+    // }
     updateData();
 
     RawHID.send((uint8_t *)&report, 1000);
