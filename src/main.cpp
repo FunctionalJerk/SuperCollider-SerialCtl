@@ -1,9 +1,14 @@
 #include <Arduino.h>
-#include <usb_dev.h>      // Teensy's core USB functions
+#include <usb_dev.h> // Teensy's core USB functions
 #include <usb_rawhid.h>
 
 #define numSwitches 3 // overall input switchPins connected
 #define numPots 4     // overall input potPins connected
+
+// if -DUSB_RAWHID is commented out in .ini file
+#ifndef RAWHID_TX_SIZE
+#define RAWHID_TX_SIZE 64
+#endif
 
 // usb_custom_class CustomHID;
 
@@ -13,29 +18,37 @@ const uint8_t bitdepth = 16;
 const uint8_t numSwitchBytes = numSwitches / 8 + 1;
 const uint8_t numPaddingBytes = RAWHID_TX_SIZE - (sizeof(uint16_t) * numPots) - (sizeof(uint8_t) * numSwitchBytes);
 
+uint8_t checksum;
+uint8_t *bytes;
+
 // this should not exceed 64 bytes (RAWHID_TX_SIZE):
 #pragma pack(push, 1)
 struct HIDData
 {
-    uint16_t pots[numPots];                                                                              // 16 bytes
-    uint8_t buttons[numSwitchBytes];                                                                     // 1 byte (will later be more)
-    uint8_t padding[numPaddingBytes]; 
+    uint16_t pots[numPots]; // 16 bytes
+    uint8_t buttons[numSwitchBytes];
+    uint8_t padding[numPaddingBytes];
 } static report;
 #pragma pack(pop)
 
 // if struct size != 64, compilation fails with this Error:
-static_assert(sizeof(report) == RAWHID_TX_SIZE, "HIDPacket must be exactly 64 bytes");
+static_assert(sizeof(report) == RAWHID_TX_SIZE, "HIDData must be exactly 64 bytes");
 
 void setup()
 {
     Serial.begin(115200);
-    analogReadAveraging(1);
-    analogReadRes(bitdepth);
+    while (!Serial)
+    { // wait for Serial...
+        delay(500);
+    }
 
-    memset(&report, 0, sizeof(report)); // zero out the struct, so padding doesn't contain garbage
+    analogReadAveraging(16); // average over 16 values
+    analogReadRes(15);
 
-    for (auto pin : switchPins) pinMode(pin, INPUT_PULLDOWN);
-    for (auto pin : potPins) pinMode(pin, INPUT);
+    for (auto pin : switchPins)
+        pinMode(pin, INPUT_PULLDOWN);
+    for (auto pin : potPins)
+        pinMode(pin, INPUT);
 }
 
 void updateData()
@@ -53,20 +66,13 @@ void updateData()
     }
 }
 
-bool receive() {
-    uint8_t *buffer[RAWHID_TX_SIZE];
-    RawHID.recv(&buffer, 1000);
-    memcpy(&report, *buffer, RAWHID_TX_SIZE);
-    return true;
-}
-
 void loop()
 {
-    // if(RawHID.available()) {
-    //     // receive();
-    // }
+    uint16_t testing = analogRead(potPins[0]);
+
     updateData();
 
-    RawHID.send((uint8_t *)&report, 1000);
-    delay(1);
+    // Serial.println(report.pots[1]);
+    Serial.write((uint8_t *)&testing, 2);
+    delay(10);
 }
