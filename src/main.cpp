@@ -1,9 +1,6 @@
 #include <Arduino.h>
 #include <usb_dev.h>      // Teensy's core USB functions
-// #include "custom_usb_desc.h"     // Your custom descriptor (quotes = local first)
-// #include "custom_usb_names.h"    // Your custom names
 #include <usb_rawhid.h>
-// #include "usb_custom.h"
 
 #define numSwitches 3 // overall input switchPins connected
 #define numPots 4     // overall input potPins connected
@@ -31,8 +28,8 @@ static_assert(sizeof(report) == RAWHID_TX_SIZE, "HIDPacket must be exactly 64 by
 
 void setup()
 {
-    Serial.begin(115200);
-    analogReadAveraging(1);
+    // Serial.begin(115200);
+    analogReadAveraging(16); // average over 16 values
     analogReadRes(bitdepth);
 
     memset(&report, 0, sizeof(report)); // zero out the struct, so padding doesn't contain garbage
@@ -47,7 +44,7 @@ void updateData()
 
     for (int i = 0; i < numSwitches; i++)
     {
-        report.buttons[i / 8] |= digitalRead(switchPins[i]) << (i % 8);
+        report.buttons[i >> 3] |= digitalRead(switchPins[i]) << (i % 8);
     }
 
     for (int i = 0; i < numPots; i++)

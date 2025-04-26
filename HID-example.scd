@@ -29,8 +29,11 @@ HIDFunc.trace;
 ~hidBus.getn(7, _.postln);
 { ~hidBus.kr }.scope;
 
-(
 
+////////////////////////////////
+// HIDFunc
+
+(
 var numPots = 4;
 var numSwitches = 3;
 
@@ -50,10 +53,11 @@ numPots.collect{|index|
 			if(id == 0) {
 				lsb = rawVal;
 				combinedVal = msb << 8 | lsb;
-				~buffer.set(index, combinedVal / 0xFFFF);
-				// ~hidBus.setAt(index, [combinedVal / 0xFFFF]);
+				// ~buffer.set(index, combinedVal / 0xFFFF);
+				~hidBus.setAt(index, [combinedVal / 0x3FFF]);
 			} {
 				msb = rawVal;
+				combinedVal = msb << 8 | lsb;
 			};
 
 		}, idArray).permanent_(false)
@@ -70,20 +74,21 @@ numPots.collect{|index|
 		var rawVal = args[1];
 		var values = rawVal >> indices & 0x01;
 
-		~buffer.set(*lace([indices + numPots, values], numSwitches*2));
-		// ~hidBus.setnAt(4, values);
+		// ~buffer.set(*lace([indices + numPots, values], numSwitches*2));
+		~hidBus.setnAt(4, values);
 
 	}, id).permanent_(false)
 
 }.value;
 )
+~hidBus.scope
 
 (
 Ndef(\test, {|freq=0|
 
-	// var ctrl = In.kr(~hidBus, 7);
-	var ctrl = PlayBuf.ar(7, ~buffer,loop: 1);
-	var freqs = ctrl[..1].lag(0.0).linexp(0.0,1.0,10,10000);
+	var ctrl = In.kr(~hidBus, 7);
+	// var ctrl = PlayBuf.ar(7, ~buffer,loop: 1);
+	var freqs = ctrl[..1].lag(0.0).linexp(0.0,1.0,10,8000).lag(0.05);
 	var muls = ctrl[2..3];
 	var switches = ctrl[4..];
 	// ctrl.poll;
