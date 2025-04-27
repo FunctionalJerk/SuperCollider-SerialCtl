@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <ADC.h>
 #include <usb_dev.h>      // Teensy's core USB functions
 #include <usb_rawhid.h>
 
@@ -9,7 +10,7 @@
 
 const uint8_t switchPins[numSwitches] = {19, 18, 17};
 const uint8_t potPins[numPots] = {23, 22, 21, 20};
-const uint8_t bitdepth = 16;
+const uint8_t bitdepth = 14;
 const uint8_t numSwitchBytes = numSwitches / 8 + 1;
 const uint8_t numPaddingBytes = RAWHID_TX_SIZE - (sizeof(uint16_t) * numPots) - (sizeof(uint8_t) * numSwitchBytes);
 
@@ -29,7 +30,7 @@ static_assert(sizeof(report) == RAWHID_TX_SIZE, "HIDPacket must be exactly 64 by
 void setup()
 {
     // Serial.begin(115200);
-    analogReadAveraging(16); // average over 16 values
+    analogReadAveraging(8); // average over 16 values
     analogReadRes(bitdepth);
 
     memset(&report, 0, sizeof(report)); // zero out the struct, so padding doesn't contain garbage
