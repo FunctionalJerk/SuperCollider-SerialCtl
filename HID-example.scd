@@ -5,11 +5,19 @@
 HID.findAvailable // initialize
 HID.postAvailable // post all
 
-~teensy = HID.open(5824, 1158, "/dev/hidraw7"); //open by vendorID & productID
+~teensy = HID.open(5824, 1158, "/dev/hidraw1"); //open by vendorID & productID
 // ~trackpad = HID.open(9094, 17207);
 
+~teensy.postUsages
+HIDUsage.getUsageDescription(1,5)
+
 // Check to see whats coming in:
-HIDFunc.trace;
+HIDdef.trace
+
+// or
+HID.debug = true
+HID.debug = false
+
 
 (
 // set up for both scenarios
@@ -27,8 +35,7 @@ HIDFunc.trace;
 // check to see what's in the buffer / bus
 ~buffer.loadToFloatArray(0,-1, _.postln)
 ~hidBus.getn(7, _.postln);
-{ ~hidBus.kr }.scope;
-
+~hidBus.scope;
 
 ////////////////////////////////
 // HIDFunc
@@ -53,6 +60,7 @@ numPots.collect{|index|
 			if(id == 0) {
 				lsb = rawVal;
 				combinedVal = msb << 8 | lsb;
+				// if(index == 0) { combinedVal.postln };
 				// ~buffer.set(index, combinedVal / 0xFFFF);
 				~hidBus.setAt(index, [combinedVal / 0x3FFF]);
 			} {
@@ -81,14 +89,13 @@ numPots.collect{|index|
 
 }.value;
 )
-~hidBus.scope
 
 (
 Ndef(\test, {|freq=0|
 
 	var ctrl = In.kr(~hidBus, 7);
 	// var ctrl = PlayBuf.ar(7, ~buffer,loop: 1);
-	var freqs = ctrl[..1].lag(0.0).linexp(0.0,1.0,10,8000).lag(0.05);
+	var freqs = ctrl[..1].lag(0.0).linexp(0.0,1.0,10,10000).lag(0.05);
 	var muls = ctrl[2..3];
 	var switches = ctrl[4..];
 	// ctrl.poll;
@@ -104,3 +111,4 @@ Ndef(\test, {|freq=0|
 	) * 0.1
 }).play
 )
+

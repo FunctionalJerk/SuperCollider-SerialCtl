@@ -1,18 +1,24 @@
 #include <Arduino.h>
 #include <ADC.h>
+#include <ADC_util.h>
 #include <usb_dev.h>      // Teensy's core USB functions
 #include <usb_rawhid.h>
 
 #define numSwitches 3 // overall input switchPins connected
 #define numPots 4     // overall input potPins connected
 
-// usb_custom_class CustomHID;
+#ifndef RAWHID_TX_SIZE
+#define RAWHID_TX_SIZE 64
+#endif
+
+ADC *adc = new ADC(); // adc object
 
 const uint8_t switchPins[numSwitches] = {19, 18, 17};
 const uint8_t potPins[numPots] = {23, 22, 21, 20};
-const uint8_t bitdepth = 14;
-const uint8_t numSwitchBytes = numSwitches / 8 + 1;
+const uint8_t numSwitchBytes = numSwitches >> 3 + 1;
 const uint8_t numPaddingBytes = RAWHID_TX_SIZE - (sizeof(uint16_t) * numPots) - (sizeof(uint8_t) * numSwitchBytes);
+const uint8_t bitdepth = 14;
+const uint8_t averaging = 16;
 
 // this should not exceed 64 bytes (RAWHID_TX_SIZE):
 #pragma pack(push, 1)
@@ -25,18 +31,25 @@ struct HIDData
 #pragma pack(pop)
 
 // if struct size != 64, compilation fails with this Error:
-static_assert(sizeof(report) == RAWHID_TX_SIZE, "HIDPacket must be exactly 64 bytes");
+static_assert(sizeof(report) == RAWHID_TX_SIZE, "HIDData must be exactly 64 bytes");
 
 void setup()
 {
     // Serial.begin(115200);
-    analogReadAveraging(8); // average over 16 values
-    analogReadRes(bitdepth);
+    // analogReadAveraging(8); // average over 8 values
+    // analogReadRes(bitdepth);
+    // ADC_settings::ADC_SAMPLING_SPEED::LOW_SPEED
+
+    adc->adc0->setAveraging(averaging);
+    adc->adc0->setResolution(bitdepth);
+    adc->adc0->setSamplingSpeed(ADC_SAMPLING_SPEED::HIGH_SPEED);
+    adc->adc0->setConversionSpeed(ADC_CONVERSION_SPEED::MED_SPEED);
 
     memset(&report, 0, sizeof(report)); // zero out the struct, so padding doesn't contain garbage
 
     for (auto pin : switchPins) pinMode(pin, INPUT_PULLDOWN);
-    for (auto pin : potPins) pinMode(pin, INPUT);
+    for (auto pin : potPins) pinMode(pin, INPUT_PULLUP);
+    // adc->setReference(ADC_REFERENCE::REF_EXT, ADC_x); // To change the reference Voltage to "external"
 }
 
 void updateData()
@@ -50,24 +63,14 @@ void updateData()
 
     for (int i = 0; i < numPots; i++)
     {
-        report.pots[i] = analogRead(potPins[i]);
+        report.pots[i] = adc->analogRead(potPins[i]) >> 2;
     }
-}
-
-bool receive() {
-    uint8_t *buffer[RAWHID_TX_SIZE];
-    RawHID.recv(&buffer, 1000);
-    memcpy(&report, *buffer, RAWHID_TX_SIZE);
-    return true;
 }
 
 void loop()
 {
-    // if(RawHID.available()) {
-    //     // receive();
-    // }
     updateData();
-
-    RawHID.send((uint8_t *)&report, 1000);
-    delay(1);
+    
+    // RawHID.send((uint8_t *)&report, 1000);
+    delay(2);
 }
