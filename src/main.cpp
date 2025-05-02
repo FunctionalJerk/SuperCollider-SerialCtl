@@ -70,11 +70,7 @@ void updateData()
 void loop()
 {
     updateData();
-<<<<<<< HEAD
     
     // RawHID.send((uint8_t *)&report, 1000);
-=======
-    RawHID.send((uint8_t *)&report, 1000);
->>>>>>> e815d6fcaff9a165d2fbaad4e8cc950c884e4c90
     delay(2);
 }
